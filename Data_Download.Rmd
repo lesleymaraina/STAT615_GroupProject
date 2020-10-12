@@ -1,0 +1,49 @@
+---
+title: "STAT615 Group Project Data Download"
+author: "Sujata, Carlos, Lesley"
+date: "10/12/2020"
+output: pdf_document
+---
+
+Data Description:
+
+Over 14000 variables [CDC and NY combined]
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+covid19 <- read.csv("../data/us-counties.csv")
+cdc_svid <- read.csv("../data/SVI2018_US_COUNTY.csv")
+```
+
+
+```{r}
+head(cdc_svid)
+```
+
+
+```{r}
+head(covid19)
+```
+
+```{r}
+cdc_svid %>%
+    rename("county" = "COUNTY") %>%
+    rename("state" = "STATE") %>%
+    inner_join(covid19, by=c("county")) -> merged_df
+
+names(merged_df)
+dim(merged_df)
+```
+
+
+TODO: 
+
+Convert state names from all caps to camelcase or vice versa
+  + must merge dataframe based on county and state. Some counties may have redundant names
+
+Select features of interest in the merged dataframe
+https://www.atsdr.cdc.gov/placeandhealth/svi/documentation/pdf/SVI2018Documentation-H.pdf

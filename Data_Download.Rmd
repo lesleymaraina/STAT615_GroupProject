@@ -39,6 +39,68 @@ names(merged_df)
 dim(merged_df)
 ```
 
+```{r}
+# Multiple Linear Regression
+# Outcome: COVID19 Deaths
+mdl <- lm(deaths ~ population_var1 + income_var2 + age_var3)
+```
+
+**Meeting Notes:**
+
+- consider including interaction term
+- explain how lasso is relevant to regression analysis and explain connection to ridge regression
+  - central idea: explain connection to shrinkage
+  
+Data Analysis Project Proposal [Due Date TBD ~ Oct 19]
+
+- 1 page description
+- List project interests
+- List relevant variables
+- Possible factors associated with response variable (cummulative COVID19 deaths)
+- Predictors being considered
+- County level data
+- Multiple linear regression
+- LASSO for feature selection
+- evaluating whether certain variables may have interactions or how they affect outcomes
+
+**Project Update**
+
+Project 1:
+
+- General check in 
+- describe what has been done since the inital proposal
+
+Project 2:
+
+- General check in 
+- describe what has been done since the inital proposal
+Presentation Materials
+
+
+**Presentation Materials**
+
+Project 1:
+
+- Powerpoint/Slides
+- submit as a pdf
+- Shiny app
+- document accompanying shiny app is needed [pdf format recommended]
+- submit as a pdf
+
+Project 2:
+
+- Powerpoint/slides
+- submit as a pdf
+- Shiny app
+- document accompanying shiny app is needed [pdf format recommended]
+
+
+
+  
+  
+  
+  
+  
 
 TODO: 
 

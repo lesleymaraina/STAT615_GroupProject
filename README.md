@@ -14,9 +14,11 @@ Our project will determine the effects of population density and COVID19 cases a
 
 Our central aim sub aims include testing the following the following hypotheses:
 
-Central Aim 1: Population density in the form of crowding affect the number of COVID19 cases and deaths
-Sub Aim 2: Age (citizens over 65 and under 17) are factors that the effects of influence of population density on the number of COVID19 cases and deaths in the US
-Sub Aim 3: Age, income, and poverty level are factors that the effects of influence of population density on the number of COVID19 cases and deaths in the US
++ **Central Aim 1**: Population density in the form of crowding affect the number of COVID19 cases and deaths
+
++ **Sub Aim 2**: Age (citizens over 65 and under 17) are factors that the effects of influence of population density on the number of COVID19 cases and deaths in the US
+
++ **Sub Aim 3**: Age, income, and poverty level are factors that the effects of influence of population density on the number of COVID19 cases and deaths in the US
 
 
 Data

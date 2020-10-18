@@ -15,7 +15,7 @@ library(tidyverse)
 
 
 ```{r}
-covid19 <- read.csv("../data/us-counties.csv")
+covid19 <- read.csv("../data/NYT_us-counties.csv")
 cdc_svid <- read.csv("../data/SVI2018_US_COUNTY.csv")
 ```
 
@@ -37,6 +37,11 @@ cdc_svid %>%
 
 names(merged_df)
 dim(merged_df)
+```
+
+```{r}
+merged_df
+write.table(merged_df, file="../data/MergedDF_Oct122020COVID19_CDCSVI_CountyData.tsv", sep = '\t', row.names=FALSE, quote=FALSE)
 ```
 
 ```{r}

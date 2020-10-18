@@ -29,28 +29,37 @@ head(cdc_svid)
 head(covid19)
 ```
 
+
+```{r}
+names(state.abb) <- state.name
+covid19$ST_ABBR <- state.abb[covid19$state]
+
+```
+
 ```{r}
 cdc_svid %>%
     rename("county" = "COUNTY") %>%
     rename("state" = "STATE") %>%
-    inner_join(covid19, by=c("county")) -> merged_df
+    inner_join(covid19, by=c("county", "ST_ABBR")) -> merged_df
 
-names(merged_df)
+head(merged_df)
 dim(merged_df)
 ```
+
 
 ```{r}
 merged_df
 write.table(merged_df, file="../data/MergedDF_Oct122020COVID19_CDCSVI_CountyData.tsv", sep = '\t', row.names=FALSE, quote=FALSE)
 ```
 
+
+**Notes From Oct 12 2020 Meeting with Professor Lu**
 ```{r}
 # Multiple Linear Regression
 # Outcome: COVID19 Deaths
 mdl <- lm(deaths ~ population_var1 + income_var2 + age_var3)
 ```
 
-**Meeting Notes:**
 
 - consider including interaction term
 - explain how lasso is relevant to regression analysis and explain connection to ridge regression

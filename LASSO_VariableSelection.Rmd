@@ -2,13 +2,17 @@
 title: 'STAT615 Regression : Group Project'
 author: "Lesley Chapman, Sujata Biradar"
 date: "`r Sys.Date()`"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
-```{r}
+```{r, include = FALSE}
+library(fastDummies)
 library(glmnet) 
 library(knitr)
-library(fastDummies)
+library(tidyverse)
 ```
 
 ```{r}
@@ -42,9 +46,9 @@ cdc_svid %>%
     select(-contains(".x")) %>% 
     select(-contains(".y")) -> merged_df
 
-head(merged_df)
-dim(merged_df)
-merged_df
+# head(merged_df)
+# dim(merged_df)
+# merged_df
 # rename df
 covid19 <- merged_df
 #write.table(merged_df, file="../data/MergedDF.tsv", sep = '\t', row.names=FALSE, quote=FALSE)
@@ -68,18 +72,15 @@ str(covid19cases)
 ```
 
 ```{r, include= FALSE}
-
-x <- covid19cases
-x$ST_ABBR <- as.factor(x$ST_ABBR)
-x$county <- as.factor(x$county)
-x$LOCATION <- as.factor(x$LOCATION)
-str(x)
+covid19cases2 <- covid19cases
+covid19cases2$ST_ABBR <- as.factor(covid19cases2$ST_ABBR)
+covid19cases2$county <- as.factor(covid19cases2$county)
+covid19cases2$LOCATION <- as.factor(covid19cases2$LOCATION)
+str(covid19cases2)
 ```
 
 
-```{r}
-head(x)
-```
+
 
 Dropped any row that had NA in as the response variable
 ```{r}
@@ -134,18 +135,23 @@ lasso_var <- CF[CF!=0,]
 dim(covid19)
 ```
 
-```{r}
+```{r, eval=FALSE}
 lasso_vars <- data.frame(lasso_var)
 lasso_vars$variables <- rownames(lasso_vars)
 lasso_vars <- lasso_vars[!grepl("(Intercept)", lasso_vars$variables),]
 
+
 # select features suggested by LASSO
-covid19cases2_lasso <- covid19cases2[,c("E_UNEMP", "E_NOHSDP", "E_AGE17", "E_SNGPNT", "M_MINRTY", "M_LIMENG", "E_GROUPQ", "EP_MUNIT", "EPL_AGE65", "EPL_AGE17", "EPL_DISABL", "F_MUNIT", "E_UNINSUR", "ST_ABBR_CA", "ST_ABBR_LA", "ST_ABBR_MI", "ST_ABBR_OR", "ST_ABBR_PA", "ST_ABBR_SC", "county_Alameda", "county_Allegheny", "county_Bergen", "county_Bernalillo", "county_Charleston", "county_Clackamas", "county_East Baton Rouge", "county_Erie", "county_Genesee", "county_Greenville", "county_King", "county_Los Angeles", "county_Lubbock", "county_Mecklenburg", "county_Milwaukee", "county_Nassau", "county_Orange", "county_Passaic", "county_Prince George's", "county_Riverside", "county_Santa Clara", "county_Suffolk", "county_Tarrant", "county_Westchester", "county_Woodbury", "county_Yakima", "county_Yuma", "LOCATION_Alameda County, California", "LOCATION_Allegheny County, Pennsylvania", "LOCATION_Bergen County, New Jersey", "LOCATION_Bernalillo County, New Mexico", "LOCATION_Charleston County, South Carolina", "LOCATION_Clackamas County, Oregon", "LOCATION_Clark County, Nevada", "LOCATION_Douglas County, Nebraska", "LOCATION_East Baton Rouge Parish, Louisiana", "LOCATION_Erie County, Pennsylvania", "LOCATION_Essex County, Massachusetts", "LOCATION_Genesee County, Michigan", "LOCATION_Greenville County, South Carolina", "LOCATION_Hall County, Georgia", "LOCATION_Jackson County, Missouri", "LOCATION_King County, Washington", "LOCATION_Lake County, Illinois", "LOCATION_Los Angeles County, California", "LOCATION_Lubbock County, Texas", "LOCATION_Mecklenburg County, North Carolina", "LOCATION_Middlesex County, Massachusetts", "LOCATION_Milwaukee County, Wisconsin", "LOCATION_Nassau County, New York", "LOCATION_Orange County, California", "LOCATION_Passaic County, New Jersey", "LOCATION_Polk County, Iowa", "LOCATION_Prince George's County, Maryland", "LOCATION_Richland County, South Carolina", "LOCATION_Riverside County, California", "LOCATION_Santa Clara County, California", "LOCATION_Suffolk County, New York", "LOCATION_Thurston County, Washington", "LOCATION_Union County, New Jersey", "LOCATION_Westchester County, New York", "confirmed_cases")]
+covid19cases2_lasso <- covid19cases2[ , c("E_UNEMP", "E_NOHSDP", "E_AGE17", "E_SNGPNT", "M_MINRTY", "M_LIMENG", "E_GROUPQ", "EP_MUNIT", "EPL_AGE65", "EPL_AGE17", "EPL_DISABL", "F_MUNIT", "E_UNINSUR", "ST_ABBR_CA", "ST_ABBR_LA", "ST_ABBR_MI", "ST_ABBR_OR", "ST_ABBR_PA", "ST_ABBR_SC", "county_Alameda", "county_Allegheny", "county_Bergen", "county_Bernalillo", "county_Charleston", "county_Clackamas", "county_East Baton Rouge", "county_Erie", "county_Genesee", "county_Greenville", "county_King", "county_Los Angeles", "county_Lubbock", "county_Mecklenburg", "county_Milwaukee", "county_Nassau", "county_Orange", "county_Passaic", "county_Prince George's", "county_Riverside", "county_Santa Clara", "county_Suffolk", "county_Tarrant", "county_Westchester", "county_Woodbury", "county_Yakima", "county_Yuma", "LOCATION_Alameda County, California", "LOCATION_Allegheny County, Pennsylvania", "LOCATION_Bergen County, New Jersey", "LOCATION_Bernalillo County, New Mexico", "LOCATION_Charleston County, South Carolina", "LOCATION_Clackamas County, Oregon", "LOCATION_Clark County, Nevada", "LOCATION_Douglas County, Nebraska", "LOCATION_East Baton Rouge Parish, Louisiana", "LOCATION_Erie County, Pennsylvania", "LOCATION_Essex County, Massachusetts", "LOCATION_Genesee County, Michigan", "LOCATION_Greenville County, South Carolina", "LOCATION_Hall County, Georgia", "LOCATION_Jackson County, Missouri", "LOCATION_King County, Washington", "LOCATION_Lake County, Illinois", "LOCATION_Los Angeles County, California", "LOCATION_Lubbock County, Texas", "LOCATION_Mecklenburg County, North Carolina", "LOCATION_Middlesex County, Massachusetts", "LOCATION_Milwaukee County, Wisconsin", "LOCATION_Nassau County, New York", "LOCATION_Orange County, California", "LOCATION_Passaic County, New Jersey", "LOCATION_Polk County, Iowa", "LOCATION_Prince George's County, Maryland", "LOCATION_Richland County, South Carolina", "LOCATION_Riverside County, California", "LOCATION_Santa Clara County, California", "LOCATION_Suffolk County, New York", "LOCATION_Thurston County, Washington", "LOCATION_Union County, New Jersey", "LOCATION_Westchester County, New York", "confirmed_cases")]
+
+write.csv(covid19cases2_lasso, '../data/covid19cases2_lasso.csv', row.names=FALSE)
 ```
 
 ### Multiple regression
 The following is the initial multiple regression model using the initial set of (LASSO selected) variables
 ```{r}
+covid19cases2_lasso <- read.csv('../data/covid19cases2_lasso.csv')
+head(covid19cases2_lasso)
 covid19_mod <- lm(confirmed_cases~., data=covid19cases2_lasso)
 summary(covid19_mod)
 ```

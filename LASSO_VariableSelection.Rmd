@@ -1,0 +1,160 @@
+---
+title: 'STAT615 Regression : Group Project'
+author: "Lesley Chapman, Sujata Biradar"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r}
+library(glmnet) 
+library(knitr)
+library(fastDummies)
+```
+
+```{r}
+# Import data
+covid19 <- read.csv("../data/NYT_us-counties.csv")
+cdc_svid <- read.csv("../data/SVI2018_US_COUNTY.csv")
+```
+
+## Data Preprocessing
+
+```{r}
+data(swiss)
+names(swiss)
+x <- model.matrix(Fertility~. , swiss)[,-1]
+head(x)
+```
+
+
+
+```{r}
+
+# Add state abbreviation column
+names(state.abb) <- state.name
+covid19$ST_ABBR <- state.abb[covid19$state]
+
+# Merge dataframes according to county and state
+cdc_svid %>%
+    rename("county" = "COUNTY") %>%
+    rename("state" = "STATE") %>%
+    inner_join(covid19, by=c("county", "ST_ABBR")) %>%
+    select(-contains(".x")) %>% 
+    select(-contains(".y")) -> merged_df
+
+head(merged_df)
+dim(merged_df)
+merged_df
+# rename df
+covid19 <- merged_df
+#write.table(merged_df, file="../data/MergedDF.tsv", sep = '\t', row.names=FALSE, quote=FALSE)
+```
+
+
+### Create dataframe with response variable of interestes (confirmed_cases)
+```{r}
+covid19 %>%
+  select(-c(date, fips, deaths, cases, confirmed_deaths, probable_cases, probable_deaths)) -> covid19cases
+```
+
+### Convert all categorical variables using dummy_cols package
+
++ Sujata : add description of why we converted all categorical variables using as.factor() by next meeting or before final presenation; alteraive: we could've usedknitR/fastDummies this however creates more columns and slows compute time
+
++ Ask: what're the benefits of converting categorical varables to binary as opposed to storing them as factors. We chose to store as factors
+
+```{r, include=FALSE}
+str(covid19cases)
+```
+
+```{r, include= FALSE}
+
+x <- covid19cases
+x$ST_ABBR <- as.factor(x$ST_ABBR)
+x$county <- as.factor(x$county)
+x$LOCATION <- as.factor(x$LOCATION)
+str(x)
+```
+
+
+```{r}
+head(x)
+```
+
+Dropped any row that had NA in as the response variable
+```{r}
+covid19cases2 %>% filter(!is.na(confirmed_cases)) -> covid19cases2
+```
+
+```{r}
+covid19cases2 %>% select(-c(confirmed_cases)) -> covid19cases2_x
+x <- model.matrix(ST~., covid19cases2_x) 
+y <- covid19cases2$confirmed_cases
+```
+
+
+```{r}
+lambda_seq <- 10^seq(2, -2, by = -.1)
+
+
+set.seed(86)
+train = sample(1:nrow(x), nrow(x)/2)
+x_test = (-train)
+y_test = y[x_test]
+ 
+cv_output <- cv.glmnet(x[train,], 
+                       y[train],
+                       alpha = 1, 
+                       lambda = lambda_seq, 
+                       nfolds = 5)
+```
+
+
+```{r}
+lambda_seq
+```
+
+### Select features selected by LASSO
+
+Coefficients that are 0 should not be included in the model. The following section produces features that we will use within our multiple linear regression
+```{r}
+best_lam <- cv_output$lambda.min
+best_lam
+
+lasso_best <- glmnet(x[train,], y[train], alpha = 1, lambda = best_lam)
+lasso_best
+
+CF <- as.matrix(coef(cv_output, cv_output$lambda.1se))
+lasso_var <- CF[CF!=0,]
+
+```
+
+
+```{r}
+dim(covid19)
+```
+
+```{r}
+lasso_vars <- data.frame(lasso_var)
+lasso_vars$variables <- rownames(lasso_vars)
+lasso_vars <- lasso_vars[!grepl("(Intercept)", lasso_vars$variables),]
+
+# select features suggested by LASSO
+covid19cases2_lasso <- covid19cases2[,c("E_UNEMP", "E_NOHSDP", "E_AGE17", "E_SNGPNT", "M_MINRTY", "M_LIMENG", "E_GROUPQ", "EP_MUNIT", "EPL_AGE65", "EPL_AGE17", "EPL_DISABL", "F_MUNIT", "E_UNINSUR", "ST_ABBR_CA", "ST_ABBR_LA", "ST_ABBR_MI", "ST_ABBR_OR", "ST_ABBR_PA", "ST_ABBR_SC", "county_Alameda", "county_Allegheny", "county_Bergen", "county_Bernalillo", "county_Charleston", "county_Clackamas", "county_East Baton Rouge", "county_Erie", "county_Genesee", "county_Greenville", "county_King", "county_Los Angeles", "county_Lubbock", "county_Mecklenburg", "county_Milwaukee", "county_Nassau", "county_Orange", "county_Passaic", "county_Prince George's", "county_Riverside", "county_Santa Clara", "county_Suffolk", "county_Tarrant", "county_Westchester", "county_Woodbury", "county_Yakima", "county_Yuma", "LOCATION_Alameda County, California", "LOCATION_Allegheny County, Pennsylvania", "LOCATION_Bergen County, New Jersey", "LOCATION_Bernalillo County, New Mexico", "LOCATION_Charleston County, South Carolina", "LOCATION_Clackamas County, Oregon", "LOCATION_Clark County, Nevada", "LOCATION_Douglas County, Nebraska", "LOCATION_East Baton Rouge Parish, Louisiana", "LOCATION_Erie County, Pennsylvania", "LOCATION_Essex County, Massachusetts", "LOCATION_Genesee County, Michigan", "LOCATION_Greenville County, South Carolina", "LOCATION_Hall County, Georgia", "LOCATION_Jackson County, Missouri", "LOCATION_King County, Washington", "LOCATION_Lake County, Illinois", "LOCATION_Los Angeles County, California", "LOCATION_Lubbock County, Texas", "LOCATION_Mecklenburg County, North Carolina", "LOCATION_Middlesex County, Massachusetts", "LOCATION_Milwaukee County, Wisconsin", "LOCATION_Nassau County, New York", "LOCATION_Orange County, California", "LOCATION_Passaic County, New Jersey", "LOCATION_Polk County, Iowa", "LOCATION_Prince George's County, Maryland", "LOCATION_Richland County, South Carolina", "LOCATION_Riverside County, California", "LOCATION_Santa Clara County, California", "LOCATION_Suffolk County, New York", "LOCATION_Thurston County, Washington", "LOCATION_Union County, New Jersey", "LOCATION_Westchester County, New York", "confirmed_cases")]
+```
+
+### Multiple regression
+The following is the initial multiple regression model using the initial set of (LASSO selected) variables
+```{r}
+covid19_mod <- lm(confirmed_cases~., data=covid19cases2_lasso)
+summary(covid19_mod)
+```
+
+**Vignettes used for reference**
+(Vignette 1)[https://glmnet.stanford.edu/articles/glmnet.html]
+(Vignette 2)[https://rstatisticsblog.com/data-science-in-action/machine-learning/lasso-regression/]
+
+
+
+
+

@@ -17,8 +17,8 @@ library(tidyverse)
 
 ```{r}
 # Import data
-covid19 <- read.csv("../data/NYT_us-counties.csv")
-cdc_svid <- read.csv("../data/SVI2018_US_COUNTY.csv")
+covid19 <- read.csv("data/NYT_us-counties.csv")
+cdc_svid <- read.csv("data/SVI2018_US_COUNTY.csv")
 ```
 
 ## Data Preprocessing
@@ -51,7 +51,7 @@ cdc_svid %>%
 # merged_df
 # rename df
 covid19 <- merged_df
-#write.table(merged_df, file="../data/MergedDF.tsv", sep = '\t', row.names=FALSE, quote=FALSE)
+#write.table(merged_df, file="data/MergedDF.tsv", sep = '\t', row.names=FALSE, quote=FALSE)
 ```
 
 
@@ -78,9 +78,6 @@ covid19cases2$county <- as.factor(covid19cases2$county)
 covid19cases2$LOCATION <- as.factor(covid19cases2$LOCATION)
 str(covid19cases2)
 ```
-
-
-
 
 Dropped any row that had NA in as the response variable
 ```{r}
@@ -144,17 +141,132 @@ lasso_vars <- lasso_vars[!grepl("(Intercept)", lasso_vars$variables),]
 # select features suggested by LASSO
 covid19cases2_lasso <- covid19cases2[ , c("E_UNEMP", "E_NOHSDP", "E_AGE17", "E_SNGPNT", "M_MINRTY", "M_LIMENG", "E_GROUPQ", "EP_MUNIT", "EPL_AGE65", "EPL_AGE17", "EPL_DISABL", "F_MUNIT", "E_UNINSUR", "ST_ABBR_CA", "ST_ABBR_LA", "ST_ABBR_MI", "ST_ABBR_OR", "ST_ABBR_PA", "ST_ABBR_SC", "county_Alameda", "county_Allegheny", "county_Bergen", "county_Bernalillo", "county_Charleston", "county_Clackamas", "county_East Baton Rouge", "county_Erie", "county_Genesee", "county_Greenville", "county_King", "county_Los Angeles", "county_Lubbock", "county_Mecklenburg", "county_Milwaukee", "county_Nassau", "county_Orange", "county_Passaic", "county_Prince George's", "county_Riverside", "county_Santa Clara", "county_Suffolk", "county_Tarrant", "county_Westchester", "county_Woodbury", "county_Yakima", "county_Yuma", "LOCATION_Alameda County, California", "LOCATION_Allegheny County, Pennsylvania", "LOCATION_Bergen County, New Jersey", "LOCATION_Bernalillo County, New Mexico", "LOCATION_Charleston County, South Carolina", "LOCATION_Clackamas County, Oregon", "LOCATION_Clark County, Nevada", "LOCATION_Douglas County, Nebraska", "LOCATION_East Baton Rouge Parish, Louisiana", "LOCATION_Erie County, Pennsylvania", "LOCATION_Essex County, Massachusetts", "LOCATION_Genesee County, Michigan", "LOCATION_Greenville County, South Carolina", "LOCATION_Hall County, Georgia", "LOCATION_Jackson County, Missouri", "LOCATION_King County, Washington", "LOCATION_Lake County, Illinois", "LOCATION_Los Angeles County, California", "LOCATION_Lubbock County, Texas", "LOCATION_Mecklenburg County, North Carolina", "LOCATION_Middlesex County, Massachusetts", "LOCATION_Milwaukee County, Wisconsin", "LOCATION_Nassau County, New York", "LOCATION_Orange County, California", "LOCATION_Passaic County, New Jersey", "LOCATION_Polk County, Iowa", "LOCATION_Prince George's County, Maryland", "LOCATION_Richland County, South Carolina", "LOCATION_Riverside County, California", "LOCATION_Santa Clara County, California", "LOCATION_Suffolk County, New York", "LOCATION_Thurston County, Washington", "LOCATION_Union County, New Jersey", "LOCATION_Westchester County, New York", "confirmed_cases")]
 
-write.csv(covid19cases2_lasso, '../data/covid19cases2_lasso.csv', row.names=FALSE)
+write.csv(covid19cases2_lasso, 'data/covid19cases2_lasso.csv', row.names=FALSE)
 ```
 
 ### Multiple regression
 The following is the initial multiple regression model using the initial set of (LASSO selected) variables
 ```{r}
-covid19cases2_lasso <- read.csv('../data/covid19cases2_lasso.csv')
-head(covid19cases2_lasso)
+covid19cases2_lasso <- read.csv('data/covid19cases2_lasso.csv')
+#head(covid19cases2_lasso)
 covid19_mod <- lm(confirmed_cases~., data=covid19cases2_lasso)
 summary(covid19_mod)
 ```
+
+## Exploratory Analysis according to county:  
+
+```{r}
+library(tidyverse)
+library(corrplot)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(dplyr)
+library(plyr)
+```
+
+
+### Correlation Plot
+
+```{r}
+corr <- covid19cases2 %>%
+  select(E_UNEMP, E_TOTPOP, E_AGE17, E_AGE65, E_PCI, E_POV, confirmed_cases)
+
+corrplot(cor(corr), method="color", type = "upper", tl.col="black",tl.srt=40, addCoef.col = "gray8", diag = T, number.cex = 0.65)
+```
+
+
+
+```{r}
+# Create a function for relationship 
+jitter <- function(x, y) {
+  ggplot(covid19cases2) +
+  geom_jitter(aes(x, y), size = 0.01, color = 'pink')
+}
+
+# Population vs Confirmed Cases
+population_cases <- jitter(covid19cases2$E_TOTPOP, covid19cases2$confirmed_cases) + labs(x = 'Population', y = 'Confirmed Cases')
+
+# E_AGE17 vs Confirmed Cases
+E_AGE17_confirmed_cases <- jitter(covid19cases2$E_AGE17, covid19cases2$confirmed_cases) + labs(x = 'E_AGE17', y = 'Confirmed Cases')
+
+# E_AGE65 vs Confirmed Cases
+E_AGE65_confirmed_cases <- jitter(covid19cases2$E_AGE65, covid19cases2$confirmed_cases) + labs(x = 'E_AGE65', y = 'Confirmed Cases')
+
+# E_PCI vs Confirmed Cases
+E_PCI_confirmed_cases <- jitter(covid19cases2$E_PCI, covid19cases2$confirmed_cases) + labs(x = 'E_PCI', y = 'Confirmed Cases')
+
+# E_POV vs Confirmed Cases
+E_POV_confirmed_cases <- jitter(covid19cases2$E_POV, covid19cases2$confirmed_cases) + labs(x = 'E_POV', y = 'Confirmed Cases')
+
+
+grid.arrange(population_cases, E_AGE17_confirmed_cases, E_AGE65_confirmed_cases, E_PCI_confirmed_cases, E_POV_confirmed_cases, nrow = 3)
+```
+
+
+```{r}
+head(covid19cases2)
+
+# Central Aim 1: Population density in the form of crowding affect the number of COVID19 cases and deaths
+
+covid19cases2 %>%
+ 
+  group_by(confirmed_cases, ST_ABBR) %>%
+  #summarise(sum = sum(domestic_debt_in_default, desc = T)) %>%
+  ggplot(aes(x=confirmed_cases ,y=ST_ABBR, fill = E_TOTPOP)) +
+  geom_col() +
+  theme_bw()
+
+# Sub Aim 2: Age (citizens over 65 and under 17) are factors that the effects of influence of population density on the number of COVID19 cases and deaths in the US
+
+
+covid19cases2 %>%
+ 
+  group_by(confirmed_cases) %>%
+  #summarise(sum = sum(domestic_debt_in_default, desc = T)) %>%
+  ggplot(aes(x=confirmed_cases ,y=ST_ABBR, fill = EP_AGE17)) +
+  geom_col() +
+  theme_bw()
+covid19cases2 %>%
+ 
+  group_by(confirmed_cases, ST_ABBR) %>%
+  #summarise(sum = sum(domestic_debt_in_default, desc = T)) %>%
+  ggplot(aes(x=confirmed_cases ,y=ST_ABBR, fill = EP_AGE65)) +
+  geom_col() +
+  theme_bw()
+
+# Sub Aim 3: Age, income, and poverty level are factors that the effects of influence of population density on the number of COVID19 cases and deaths in the US
+```
+
+
+```{r}
+library(gridExtra)
+library(grid)
+
+# Create a density plot fuction
+density_plot <- function(x) {
+  ggplot(covid19cases2) +
+    geom_density(aes(x), fill = 'skyblue') +
+    theme_bw() +
+    theme(plot.title = element_text(size = 14, face = "bold"),
+            text = element_text(size = 12)) +
+    theme(legend.title=element_blank())
+}
+
+
+# Prepare density plots
+population_density <- density_plot(covid19cases2$E_TOTPOP) + labs(x = '% of occupied housing units with more people than rooms estimate')
+Age65_density <- density_plot(covid19cases2$EP_AGE65) + labs(x = '% of persons aged 65 and older estimate')
+Age17_density <- density_plot(covid19cases2$EP_AGE17) + labs(x = '% of persons aged 17 and younger estimate')
+Income_density <- density_plot(covid19cases2$E_PCI) + labs(x = 'Per capita income estimate')
+Poverty_density <- density_plot(covid19cases2$EP_POV) + labs(x = '% of persons living below poverty estimate')
+
+
+# Grid plots
+grid.arrange(population_density, Age65_density, Age17_density, Income_density, Poverty_density, nrow = 2)
+
+```
+
 
 **Vignettes used for reference**
 (Vignette 1)[https://glmnet.stanford.edu/articles/glmnet.html]
